@@ -58,3 +58,5 @@ results
 
 npm-debug.log
 node_modules
+docker-compose.yml
+.envset
