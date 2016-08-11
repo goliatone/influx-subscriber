@@ -2,8 +2,13 @@
 
 /**
  * Transform a line protocol entry into JSON
+ * Read more at InfluxDB [documentation][1] page.
+ * [1]:https://docs.influxdata.com/influxdb/v0.13/write_protocols/write_syntax/
  *
+ * The basic format is as follows:
+ * ```
  * measurement[,tag_key1=tag_value1...] field_key=field_value[,field_key2=field_value2] [timestamp]
+ * ```
  *
  * @param  {Buffer} point Line protocol point
  * @return {Object}       JSON representation
@@ -59,7 +64,7 @@ function parse(point){
         key = field.split('=')[0];
         value = field.split('=')[1];
         var out = {};
-        out[key] = JSON.parse(value);
+        out[key] = cast(value);
         return out;
     });
 
@@ -73,6 +78,38 @@ function parse(point){
     };
 }
 
+function cast(value){
+    /*
+     * Integers: 344i
+     */
+    if(value.match(/^\d+i$/m)){
+        value = value.slice(0, -1);
+        return parseInt(value);
+    }
 
-// var o = module.exports.lineToJSON('access_granted,building=MTL01,type=access_granted value=1,userid="53e118c0-da47-0133-d6d4-1a37fdb00f9d",username="Tran",portalname="ww-mtl01-4th-fl-mantrap-mailroom" 1470957807655000000');
-// console.log(o)
+    /* boolean true
+     * t, T, true, True, or TRUE
+     */
+    if(value.match(/^t$|^true$/im)){
+        return true;
+    }
+
+    /* boolean false
+     * f, F, false, False, or FALSE
+     */
+    if(value.match(/^f$|^false$/im)){
+        return false;
+    }
+
+    if(value.match(/^"(.*)"$/)){
+        value = value.match(/^"(.*)"$/);
+        if(value.length === 2){
+            return value[1];
+        }
+    }
+
+    if(!isNaN(value)) return parseFloat(value);
+
+    return undefined;
+
+}
