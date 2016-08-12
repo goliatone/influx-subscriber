@@ -1,28 +1,65 @@
+/*jshint esversion:6, node:true*/
 'use strict';
 
-var dgram = require('dgram');
+const dgram = require('dgram');
+const extend = require('gextend');
+const EventEmitter = require('events');
+const debug = require('debug')('socket');
 
-//Initialize a UDP server to listen for json payloads on port 3333
-var srv = dgram.createSocket('udp4');
-srv.on('message', function (msg, rinfo) {
-    // console.log('UDP: ' + msg + ' from ' + rinfo.address + ':' + rinfo.port);
-    var point = require('./parser').lineToJSON(msg);
-    console.log(point);
-});
+class Server extends EventEmitter {
 
-srv.on('listening', function () {
-    var address = srv.address();
-    console.log('server listening ' + address.address + ':' + address.port);
-});
+    constructor(options){
+        super();
 
-srv.on('error', function (err) {
-    console.error(err);
-    process.exit(0);
-});
+        options = extend({}, Server.DEFAULTS, options);
 
-srv.bind(getPort());
+        if(options.autoinitialize) this.init(options);
+    }
 
-function getPort(port=9090){
-    if(!process.env.NODE_UDP_PORT) return port;
-    return parseInt(process.env.NODE_UDP_PORT);
+    init(config){
+        if(this.initialized) return;
+        this.initialized = true;
+
+        this.socket = dgram.createSocket('udp4');
+        this.addListeners();
+
+        extend(this, Server.DEFAULTS, config);
+    }
+
+    addListeners(){
+
+        this.socket.on('message', (point, info) => {
+            this.emit('message', point);
+        });
+
+        this.socket.on('listening', () => {
+            var address = this.socket.address();
+            debug('listening ' + address.address + ':' + address.port);
+        });
+
+        this.socket.on('error', function(err){
+            console.error(err);
+            process.exit(0);
+        });
+    }
+
+    start(){
+        this.socket.bind(this.port);
+    }
+
+    get port(){
+        return this._port;
+    }
+
+    set port(p){
+        if(typeof p === 'string') p = parseInt(p);
+        this._port = p;
+    }
 }
+
+Server.DEFAULTS = {
+    autoinitialize: true,
+    port: process.env.NODE_UDP_PORT || 9090
+};
+
+module.exports = Server;
