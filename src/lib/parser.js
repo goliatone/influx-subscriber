@@ -13,7 +13,7 @@
  * @param  {Buffer} point Line protocol point
  * @return {Object}       JSON representation
  */
-module.exports.lineToJSON = function(point){
+function lineToJSON(point){
 
     if(point) {
         point = point.toString();
@@ -36,8 +36,13 @@ module.exports.lineToJSON = function(point){
     }
 
     return out;
-};
+}
 
+/**
+ * Actual parsing of line protocol
+ * @param  {string} point Point in line protcol
+ * @return {object}       Parsed object
+ */
 function parse(point){
     var parts = point.split(' ');
 
@@ -78,6 +83,24 @@ function parse(point){
     };
 }
 
+/**
+ * Cast each element in it's equivalent
+ * JS type.
+ *
+ * Note that for fields, without knowing
+ * the type it was stored as in InfluxDB
+ * we have to guess it's type.
+ *
+ * This can be an issue in cases where
+ * we have fields that are alphanumeric
+ * with a chance of having a instance
+ * being all digits.
+ *
+ * Tags are all strings.
+ *
+ * @param  {Mixed} value
+ * @return {Mixed}
+ */
 function cast(value){
     /*
      * Integers: 344i
@@ -101,6 +124,9 @@ function cast(value){
         return false;
     }
 
+    /*
+     * match strings
+     */
     if(value.match(/^"(.*)"$/)){
         value = value.match(/^"(.*)"$/);
         if(value.length === 2){
@@ -113,3 +139,8 @@ function cast(value){
     return undefined;
 
 }
+
+
+module.exports.cast = cast;
+module.exports.parse = parse;
+module.exports.lineToJSON = lineToJSON;
