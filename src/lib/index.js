@@ -37,7 +37,7 @@ class Subscriber extends EventEmitter {
 
     handleMessage(point){
         var payload = parser.lineToJSON(point);
-        this.emit(payload.measurement, payload);
+        this.emit('point', payload);
     }
 }
 
