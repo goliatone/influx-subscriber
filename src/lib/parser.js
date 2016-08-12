@@ -1,3 +1,4 @@
+/*jshint esversion:6, node:true*/
 'use strict';
 
 /**
@@ -20,7 +21,11 @@ function lineToJSON(point){
     }
 
     if(!point || typeof point !== 'string'){
-        console.warn('Parser Error: invalid point format ', point);
+        var error = new Error('Parser Error: invalid point format');
+        if(lineToJSON.strict){
+            throw error;
+        }
+        console.warn(error.message, point);
         return {};
     }
 
@@ -47,12 +52,20 @@ function parse(point){
     var parts = point.split(' ');
 
     var measurement,
-        tags = parts[0],
-        fields = parts[1],
+        tags = parts[0] || '',
+        fields = parts[1] || '',
         timestamp = parts[2];
 
-    tags = tags.split(',');
-    fields = fields.split(',');
+    function splitColon(str = ''){
+        str = str.replace(/\\/m, '#c#');
+        str = str.split(',');
+        str.map(function(s){
+            return s.replace(/#c#/gm, ',');
+        });
+        return str;
+    }
+    tags = splitColon(tags);
+    fields = splitColon(fields);
 
     measurement = tags.shift();
 
@@ -64,23 +77,32 @@ function parse(point){
         out[key] = value;
         return out;
     });
+    tags = tags.filter((x) =>  x !== undefined);
 
     fields = fields.map(function(field){
+        if(!field) return undefined;
         key = field.split('=')[0];
         value = field.split('=')[1];
         var out = {};
         out[key] = cast(value);
         return out;
     });
+    fields = fields.filter((x) =>  x !== undefined);
 
-    timestamp = parseInt(timestamp);
+    if(timestamp){
+        timestamp = parseInt(timestamp);
+    }
 
-    return {
+    var out = {
         timestamp: timestamp,
         measurement: measurement,
         fields: fields,
         tags: tags
     };
+
+    if(!timestamp) delete out.timestamp;
+
+    return out;
 }
 
 /**
@@ -102,6 +124,7 @@ function parse(point){
  * @return {Mixed}
  */
 function cast(value){
+    if(value === undefined) return undefined;
     /*
      * Integers: 344i
      */
