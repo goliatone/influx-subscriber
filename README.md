@@ -11,14 +11,13 @@ const Subscriber = require('influx-subscriber');
 const server = new Subscriber();
 
 server.on('point', (point) => {
-    console.log(point);
     var measurement = point.measurement;
     if(measurement.match(/^access_granted\.global_unique\.1d$/)){
-        persistence(point);
+        persist(point);
     }
 });
 
-function persistence(point){
+function persist(point){
     // { timestamp: 1470934800000000000,
     //   measurement: 'access_granted.global_unique.1h',
     //   fields: [ { members: 290 } ],
