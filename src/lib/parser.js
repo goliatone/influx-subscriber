@@ -45,6 +45,19 @@ function lineToJSON(point){
 
 /**
  * Actual parsing of line protocol
+ *
+ * We have to review how we do parsing in
+ * order to perperly handle non normalized
+ * names or values- i.e. names with commas or
+ * spaces in them or values with spaces in them.
+ *
+ * We could extract all key/pair values from
+ * a string, and then we are left with the
+ * measurement...
+ * ```
+ * ([a-zA-Z-\s]+=[a-zA-Z-\s]+)
+ * ```
+ *
  * @param  {string} point Point in line protcol
  * @return {object}       Parsed object
  */
