@@ -10,7 +10,10 @@ Install the module with: `npm install influx-subscriber`
 const Subscriber = require('influx-subscriber');
 const server = new Subscriber({
     server:{
-        port: 9090
+        port: 9090,
+        options: {
+            reuseAddr: true
+        }
     }
 });
 
@@ -33,6 +36,16 @@ function persist(point){
 
 ### Configuration
 
+Under the hood, a Subscriber will use a [dgram][dgram] instance to create the UDP connection.
+In the configuration object, under the `server` key, you can pass the following values:
+- `port`
+- `bind`
+
+To get more details on what those do, read the documentation.
+
+There is a default port `9090` that will be used if not overriden with a configuration object. If a `bind` object is found then it will be used instead of the `port`.
+
+#### port
 The default UDP port the server will be listening to is **9090**.
 
 To set a custom UDP port you have two options:
@@ -41,11 +54,48 @@ To set a custom UDP port you have two options:
 
 ```js
 const server = new Subscriber({
-    server:{
+    server: {
         port: 9090
     }
 });
 ```
+
+### bind
+
+* port <Number> - Integer, Optional
+* address <String>, Optional
+* callback <Function> with no parameters, Optional. Called when binding is complete.
+
+```js
+const server = new Subscriber({
+    server: {
+        bind: {
+            address: 'localhost',
+            port: 8000,
+            exclusive: true
+        }
+    }
+});
+```
+
+#### options
+As the `options` field goes straight to `dgram.createSocket` you can pass either a String with a type, or an object. Read more [here][dgram-createSocket].
+
+
+* type
+* reuseAddr
+
+```js
+const server = new Subscriber({
+    server: {
+        options: {
+            type: 'udp4',
+            reuseAddr: true
+        }
+    }
+});
+```
+
 ### InfluxDB setup
 
 You need to register a new subscriber in your InfluxDB instance, you do so by running a [create subscription][docs-1] query:
@@ -76,3 +126,5 @@ Licensed under the MIT license.
 
 
 [docs-1]:https://docs.influxdata.com/influxdb/v0.13/query_language/spec/#create-subscription
+[dgram]:https://nodejs.org/api/dgram.html
+[dgram-createSocket]:https://nodejs.org/api/dgram.html#dgram_dgram_createsocket_options_callback
