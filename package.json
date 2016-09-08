@@ -2,7 +2,7 @@
   "name": "influx-subscriber",
   "title": "Influx Subscriber",
   "description": "Influxdb UDP subscriber",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "homepage": "https://github.com/goliatone/influx-subscriber",
   "author": {
     "name": "goliatone",
